@@ -1,20 +1,20 @@
 ﻿
-// DualRoomChatDlg.h: 헤더 파일
+// ClientDlg.h: 헤더 파일
 //
 
 #pragma once
 
 
-// CDualRoomChatDlg 대화 상자
-class CDualRoomChatDlg : public CDialogEx
+// CClientDlg 대화 상자
+class CClientDlg : public CDialogEx
 {
 // 생성입니다.
 public:
-	CDualRoomChatDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
+	CClientDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_DUALROOMCHAT_DIALOG };
+	enum { IDD = IDD_CLIENT_DIALOG };
 #endif
 
 	protected:
@@ -31,6 +31,9 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	CIPAddressCtrl IPAddr;
-	CEdit m_portNum;
+	CEdit m_ipAddr;
+	CEdit m_port;
+	void OnBnClickedButton1();
+	bool CheckAddr();
+	bool CheckPort();
 };

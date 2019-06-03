@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.645
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DualRoomChat", "DualRoomChat\DualRoomChat.vcxproj", "{397FFEAB-5586-4EC2-B899-18BCECC60695}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{BB751094-E01D-4CC3-A09F-F1B5510A35A2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,14 +15,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Debug|x64.ActiveCfg = Debug|x64
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Debug|x64.Build.0 = Debug|x64
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Debug|x86.ActiveCfg = Debug|Win32
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Debug|x86.Build.0 = Debug|Win32
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Release|x64.ActiveCfg = Release|x64
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Release|x64.Build.0 = Release|x64
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Release|x86.ActiveCfg = Release|Win32
-		{397FFEAB-5586-4EC2-B899-18BCECC60695}.Release|x86.Build.0 = Release|Win32
 		{BB751094-E01D-4CC3-A09F-F1B5510A35A2}.Debug|x64.ActiveCfg = Debug|x64
 		{BB751094-E01D-4CC3-A09F-F1B5510A35A2}.Debug|x64.Build.0 = Debug|x64
 		{BB751094-E01D-4CC3-A09F-F1B5510A35A2}.Debug|x86.ActiveCfg = Debug|Win32
@@ -31,6 +23,14 @@ Global
 		{BB751094-E01D-4CC3-A09F-F1B5510A35A2}.Release|x64.Build.0 = Release|x64
 		{BB751094-E01D-4CC3-A09F-F1B5510A35A2}.Release|x86.ActiveCfg = Release|Win32
 		{BB751094-E01D-4CC3-A09F-F1B5510A35A2}.Release|x86.Build.0 = Release|Win32
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Debug|x64.ActiveCfg = Debug|x64
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Debug|x64.Build.0 = Debug|x64
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Debug|x86.ActiveCfg = Debug|Win32
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Debug|x86.Build.0 = Debug|Win32
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Release|x64.ActiveCfg = Release|x64
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Release|x64.Build.0 = Release|x64
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Release|x86.ActiveCfg = Release|Win32
+		{A1D093FC-70BE-4C07-80FB-61EED3FE23D3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
