@@ -14,7 +14,7 @@
 
 // CClientDlg 대화 상자
 
-DWORD WINAPI RecvMsg(LPVOID arg)
+DWORD WINAPI ThreadRecvMsg(LPVOID arg)
 {
 	CClientDlg *pDlg = (CClientDlg*)arg;
 
@@ -22,11 +22,11 @@ DWORD WINAPI RecvMsg(LPVOID arg)
 		return 0;
 
 	int retval;
-	char buf[BUFSIZE + 1] = { 0 };
+	MSGDATA recvMsg;
 
 	while (1) {
 		// 데이터 받기
-		retval = recv(pDlg->sock, buf, BUFSIZE + 1, 0);
+		retval = recv(pDlg->sock, (char*)&recvMsg, sizeof(recvMsg), 0);
 		if (retval == SOCKET_ERROR) {
 			AfxMessageBox("recv() error");
 			break;
@@ -34,23 +34,42 @@ DWORD WINAPI RecvMsg(LPVOID arg)
 		else if (retval == 0)
 			break;
 
-		// 받은 데이터 출력
-		buf[retval] = '\0';
-
-		CString str = buf;
-		str.Delete(0, 1);
-
-		if (buf[0] == FIRSTROOM)
+		if (recvMsg.type == FIRSTROOM)
 		{
-			pDlg->AddFirstRoomMsg(str);
+			pDlg->AddFirstRoomMsg(recvMsg.buf);
 		}
-		else if (buf[0] == SECONDROOM)
+		else if (recvMsg.type == SECONDROOM)
 		{
-			pDlg->AddSecondRoomMsg(str);
+			pDlg->AddSecondRoomMsg(recvMsg.buf);
 		}
-		else if (buf[0] == SHOWUSERS)
+		else if (recvMsg.type == SHOWUSERS)
 		{
+			int size = recvMsg.buf[0], i;
+			pDlg->AddFirstRoomMsg("########ROOM1 명단########");
+			pDlg->AddSecondRoomMsg("########ROOM2 명단########");
+			for (i = 0; i < size; ++i)
+			{
+				recv(pDlg->sock, (char*)&recvMsg, sizeof(recvMsg), 0);
+				pDlg->AddFirstRoomMsg(recvMsg.buf);
+				recv(pDlg->sock, (char*)&recvMsg, sizeof(recvMsg), 0);
+				pDlg->AddSecondRoomMsg(recvMsg.buf);
+			}
 
+			pDlg->AddFirstRoomMsg("########################");
+			pDlg->AddSecondRoomMsg("########################");
+		}
+		else if (recvMsg.type == NAMECHANGE)
+		{
+			if (recvMsg.buf[0] == '0')
+			{
+				AfxMessageBox("닉네임을 변경 하세요");
+				(pDlg->GetDlgItem(IDC_SEND_BUTTON))->EnableWindow(false);
+			}
+			else
+			{
+				AfxMessageBox("닉네임 변경 성공");
+				(pDlg->GetDlgItem(IDC_SEND_BUTTON))->EnableWindow(true);
+			}
 		}
 	}
 
@@ -83,6 +102,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO1, &CClientDlg::OnBnClickedRadio1)
 	ON_BN_CLICKED(IDC_RADIO2, &CClientDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_SHOW_BUTTON, &CClientDlg::OnBnClickedShowButton)
+	ON_BN_CLICKED(IDC_ID_BUTTON, &CClientDlg::OnBnClickedIdButton)
 END_MESSAGE_MAP()
 
 
@@ -99,8 +119,13 @@ BOOL CClientDlg::OnInitDialog()
 
 	m_ipAddr.SetWindowText("127.0.0.1");
 	m_port.SetWindowText("9000");
-	m_roomNumber = 1;
+	((CButton*)GetDlgItem(IDC_RADIO1))->SetCheck(true);
+	
+	memset(&chatMsg.buf, 0, sizeof(chatMsg.buf));
+	chatMsg.type = FIRSTROOM;
 
+	srand((unsigned int)time(NULL));
+	chatMsg.ID = rand();
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -171,7 +196,7 @@ void CClientDlg::OnBnClickedButton1()
 		m_port.EnableWindow(false);
 		GetDlgItem(IDC_BUTTON1)->EnableWindow(false);
 
-		hThread = CreateThread(NULL, 0, RecvMsg, NULL, 0, NULL);
+		hThread = CreateThread(NULL, 0, ThreadRecvMsg, this, 0, NULL);
 		if (hThread == NULL)
 		{
 			MessageBox("fail make thread\n");
@@ -194,6 +219,8 @@ bool CClientDlg::CheckName()
 	if (str.GetLength() >= NAMESIZE)
 		return false;
 	
+	strcpy(chatMsg.name[0], str);
+	strcpy(chatMsg.name[1], str);
 	return true;
 }
 
@@ -260,29 +287,34 @@ void CClientDlg::OnBnClickedSendButton()
 {
 	CString tmp;
 	m_message.GetWindowText(tmp);
-	
-	CString str;
-	str.Format("%d", m_roomNumber);
-	str.Append(str);
-	
-	// 빈메세지가 아닌 경우
-	if (str != "")
+
+	if (tmp != "")
 	{
+		CString str;
+		if (chatMsg.type == FIRSTROOM)
+			str = chatMsg.name[0];
+		else if(chatMsg.type == SECONDROOM)
+			str = chatMsg.name[1];
+
+		str += " : " + tmp;
+
+		// 빈메세지가 아닌 경우
+	
 		m_message.SetWindowText("");
 		// 데이터 보내기
-		MySendTo(str);
+		MySend(str);
 	}
 }
 
-void CClientDlg::MySendTo(CString str)
+void CClientDlg::MySend(CString str)
 {
-	
-	
-	int retval = sendto(sock, str, str.GetLength(), 0,
-		(SOCKADDR*)& remoteaddr, sizeof(remoteaddr));
+	strcpy(chatMsg.buf, str);
+	int retval = send(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
 	if (retval == SOCKET_ERROR) {
 		AfxMessageBox("sendto() Error");
 	}
+
+	memset(&chatMsg.buf, 0, sizeof(chatMsg.buf));
 }
 
 bool CClientDlg::initSock()
@@ -316,6 +348,11 @@ bool CClientDlg::initSock()
 	{
 		MessageBox("connect() error");
 		return false;
+	}
+
+	int retval = send(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+	if (retval == SOCKET_ERROR) {
+		AfxMessageBox("sendto() Error");
 	}
 
 	return true;
@@ -389,18 +426,43 @@ void CClientDlg::AddSecondRoomMsg(CString str)
 
 void CClientDlg::OnBnClickedRadio1()
 {
-	m_roomNumber = FIRSTROOM;
+	chatMsg.type = FIRSTROOM;
+	m_name.SetWindowText(chatMsg.name[0]);
 }
 
 void CClientDlg::OnBnClickedRadio2()
 {
-	m_roomNumber = SECONDROOM;
+	chatMsg.type = SECONDROOM;
+	m_name.SetWindowText(chatMsg.name[1]);
 }
-
 
 void CClientDlg::OnBnClickedShowButton()
 {
+	int tmp = chatMsg.type;
+	chatMsg.type = SHOWUSERS;
+
+	MySend("show user list");
+
+	chatMsg.type = tmp;
+}
+
+void CClientDlg::OnBnClickedIdButton()
+{
 	CString str;
-	str.Format("%d", SHOWUSERS);
-	MySendTo(str);
+	m_name.GetWindowText(str);
+	if (chatMsg.type == FIRSTROOM)
+	{
+		strcpy(chatMsg.name[0], str);
+	}
+	else if(chatMsg.type == SECONDROOM)
+	{
+		strcpy(chatMsg.name[1], str);
+	}
+
+	int tmp = chatMsg.type;
+	chatMsg.type = NAMECHANGE;
+
+	MySend("name change");
+
+	chatMsg.type = tmp;
 }

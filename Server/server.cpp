@@ -7,41 +7,44 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
+#include <string>
 
 #define SERVERPORT	9000
 #define BUFSIZE		1024
-#define NAMESIZE	64
+#define NAMESIZE	32
 
+// 메세지 TYPE
 #define FIRSTROOM	11
 #define SECONDROOM	12
 #define SHOWUSERS	13
+#define NAMECHANGE	14
+#define INIT		15
+
+using namespace std;
 
 // 소켓 정보 저장을 위한 구조체와 변수
-struct SOCKETINFO
+struct MSGDATA
+{
+	int		type;
+	int		ID;
+	char	name[2][NAMESIZE];
+	char	buf[BUFSIZE];
+}chatMsg;
+
+typedef struct SOCKETINFO
 {
 	SOCKET	sock;
-	char	buf[BUFSIZE];
 	int		recvbytes;
-	int		sendbytes;
-	int		room;
-	char	name[NAMESIZE];
 	int		ID;
-};
+	char	name[2][NAMESIZE];
+}SOCKETINFO;
 
-bool b_login;
-bool b_show;
-bool b_firstRoom;
-bool b_secondRoom;
 int  socketCount;
-int  userID;
-char  chatMsg[BUFSIZE];
 SOCKETINFO	*SockArray[FD_SETSIZE];
 
 // 소켓 관리 함수
 BOOL AddInfo(SOCKET sock);
 void RemoveInfo(int nIndex);
-bool CheckUserName(SOCKETINFO *ptr, int retval, int index);
-void Initialize();
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(char *msg)
@@ -72,9 +75,8 @@ void err_display(char *msg)
 
 int main()
 {
-	Initialize();
-
 	int retval;
+	memset(&chatMsg, 0, sizeof(chatMsg));
 
 	// 윈속 초기화
 	WSADATA wsa;
@@ -103,7 +105,7 @@ int main()
 	if (retval == SOCKET_ERROR) err_display(const_cast<char*>("ioctlsocket()"));
 
 	// 데이터 통신에 사용할 변수(공통)
-	FD_SET rset, wset;
+	FD_SET rset;
 	SOCKET clientSock;
 	int len, i, j;
 	SOCKADDR_IN clientAddr;
@@ -111,18 +113,13 @@ int main()
 	while (1) {
 		// 소켓 셋 초기화
 		FD_ZERO(&rset);
-		FD_ZERO(&wset);
 		FD_SET(sock, &rset);
-		for (i = 0; i < socketCount; i++) {
-
-			if (SockArray[i]->recvbytes > SockArray[i]->sendbytes)
-				FD_SET(SockArray[i]->sock, &wset);
-			else
-				FD_SET(SockArray[i]->sock, &rset);
+		for (i = 0; i < socketCount; ++i) {
+			FD_SET(SockArray[i]->sock, &rset);
 		}
 
 		// select()
-		retval = select(0, &rset, &wset, NULL, NULL);
+		retval = select(0, &rset, NULL, NULL, NULL);
 		if (retval == SOCKET_ERROR) {
 			err_display(const_cast<char*>("select()"));
 			break;
@@ -140,62 +137,128 @@ int main()
 				// 접속한 클라이언트 정보 출력
 				printf("##클라이언트 접속: %s:%d\n",
 					inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+
+				recv(clientSock, (char*)&chatMsg, sizeof(chatMsg), 0);
+				chatMsg.type
+
+
 				// 소켓 정보 추가
 				AddInfo(clientSock);
 			}
 		}
 
 		// 소켓 셋 검사(2): 데이터 통신
-		for (i = 0; i < socketCount; i++) 
+		for (i = 0; i < socketCount; ++i)
 		{
 			SOCKETINFO *ptr = SockArray[i];
 
-			if (FD_ISSET(ptr->sock, &rset)) 
+			if (FD_ISSET(ptr->sock, &rset))
 			{
-				memset(ptr->buf, 0, sizeof(ptr->buf));
 				// 데이터 받기
-				retval = recv(ptr->sock, ptr->buf, BUFSIZE, 0);
+				retval = recv(ptr->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+				printf("%s\n", chatMsg.buf);
+
 				if (retval == 0 || retval == SOCKET_ERROR)
 				{
 					RemoveInfo(i);
 					continue;
 				}
 
-				ptr->recvbytes = retval;
+				ptr->recvbytes += retval;
 
-				len = sizeof(clientAddr);
-				getpeername(ptr->sock, (SOCKADDR *)&clientAddr, &len);
-				
-				/*
+				if (ptr->recvbytes == sizeof(chatMsg))
+				{
+					int idx = 0;
+					int size = 0;
+					int n;
 
-				데이터 처리
+					ptr->recvbytes = 0;
 
-				*/
-			}
-
-			if (FD_ISSET(ptr->sock, &wset))
-			{
-				// 데이터 보내기
-				for (j = 0; j < socketCount; j++)
-				{  // 여러 접속자에게 발송
-					SOCKETINFO* sptr = SockArray[j];
-					retval = send(sptr->sock, ptr->buf + ptr->sendbytes,
-						ptr->recvbytes - ptr->sendbytes, 0);
-
-					if (retval == SOCKET_ERROR)
+					switch (chatMsg.type)
 					{
-						err_display(const_cast<char*>("send()"));
-						RemoveInfo(i);
-						continue;
+					case NAMECHANGE:
+						for (j = 0; j < socketCount; ++j)
+						{
+							SOCKETINFO *ptr2 = SockArray[j];
+							if (ptr2->ID == chatMsg.ID)
+							{
+								idx = j;
+								if (!strcmp(chatMsg.name[0], ptr2->name[0]))
+									n = 1;
+								else
+									n = 0;
+
+								break;
+							}
+						}
+
+						for (j = 0; j < socketCount; ++j)
+						{
+							if (!strcmp(chatMsg.name[n], SockArray[j]->name[n]))
+								break;
+						}
+
+						if (j == socketCount)
+						{
+							strcpy(SockArray[idx]->name[n], chatMsg.name[n]);
+							strcpy(chatMsg.buf, "1");
+							send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+						}
+						else
+						{
+							strcpy(chatMsg.buf, "0");
+							send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+						}
+						
+						break;
+					case SHOWUSERS:
+						for (j = 0; j < socketCount; ++j)
+						{
+							SOCKETINFO *ptr2 = SockArray[j];
+
+							if (ptr2->ID == chatMsg.ID)
+							{
+								idx = j;
+								break;
+							}
+						}
+
+						chatMsg.buf[0] = socketCount;
+						send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+						
+						for (j = 0; j < socketCount; ++j)
+						{
+							SOCKETINFO *ptr2 = SockArray[j];
+
+							strcpy(chatMsg.buf, ptr2->name[0]);
+							send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+
+							strcpy(chatMsg.buf, ptr2->name[1]);
+							send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+						}
+
+						break;
+
+					default:
+						// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
+						for (j = 0; j < socketCount; ++j) {
+							SOCKETINFO *ptr2 = SockArray[j];
+							retval = send(ptr2->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+							if (retval == SOCKET_ERROR) {
+								err_display(const_cast<char*>("send()"));
+								RemoveInfo(j);
+								--j; // 루프 인덱스 보정
+								continue;
+							}
+						}
+
+						memset(&chatMsg, 0, sizeof(chatMsg));
+						break;
 					}
 				}
-
-				ptr->sendbytes += retval;
-				if (ptr->recvbytes == ptr->sendbytes)
-				{
-					ptr->recvbytes = ptr->sendbytes = 0;
-				}
 			}
+
+
 		}
 	}
 
@@ -215,15 +278,15 @@ BOOL AddInfo(SOCKET sock)
 		printf("[오류] 메모리가 부족합니다!\n");
 		return FALSE;
 	}
-	//시간에 따른 랜덤 UserID값 생성
-	srand((unsigned int)time(NULL));
-	userID = rand();
+
+	int retval = recv(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
 
 	ptr->sock = sock;
 	ptr->recvbytes = 0;
-	ptr->ID = userID;
+	ptr->ID = chatMsg.ID;
+	strcpy(ptr->name[0], chatMsg.name[0]);
+	strcpy(ptr->name[1], chatMsg.name[1]);
 	SockArray[socketCount++] = ptr;
-	b_login = true;
 
 	return TRUE;
 }
@@ -247,24 +310,4 @@ void RemoveInfo(int nIndex)
 		SockArray[nIndex] = SockArray[socketCount - 1];
 
 	--socketCount;
-}
-
-bool CheckUserName(SOCKETINFO *ptr, int retval, int index) {
-	for (int i = 0; i < socketCount; i++) {
-		SOCKETINFO *pInfo = SockArray[i];
-		if (!strcmp(pInfo->name, ptr->name) && pInfo->room == ptr->room && pInfo->ID != ptr->ID) {
-			sprintf(chatMsg, "같은 이름의 접속자가 있습니다. 닉네임을 바꿔주세요");
-			retval = send(ptr->sock, (char *)&chatMsg, BUFSIZE, 0);
-			RemoveInfo(index);
-			return true;
-		}
-	}
-	return false;
-}
-
-void Initialize() {
-	b_login = false;
-	b_show = false;
-	b_firstRoom = false;
-	b_secondRoom = false;
 }

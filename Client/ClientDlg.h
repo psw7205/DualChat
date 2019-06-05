@@ -7,12 +7,24 @@
 #pragma warning(disable:4996)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
+#define SERVERPORT	9000
 #define BUFSIZE		1024
-#define NAMESIZE	64
+#define NAMESIZE	32
 
+// 메세지 TYPE
 #define FIRSTROOM	11
 #define SECONDROOM	12
 #define SHOWUSERS	13
+#define NAMECHANGE	14
+#define INIT		15
+
+struct MSGDATA
+{
+	int		type;
+	int		ID;
+	char	name[2][NAMESIZE];
+	char	buf[BUFSIZE];
+};
 
 // CClientDlg 대화 상자
 class CClientDlg : public CDialogEx
@@ -57,17 +69,17 @@ public:
 	char sendbuf[BUFSIZE + 1];
 	int len;
 	HANDLE hThread;
-	SOCKADDR_IN remoteaddr;
 
-	void MySendTo(CString str);
+	void MySend(CString str);
 	bool initSock();
 	CListBox m_fistRoom;
 	CListBox m_secondRoom;
 	CEdit m_name;
-
-	char m_roomNumber;
+	
+	MSGDATA chatMsg;
 
 	afx_msg void OnBnClickedRadio1();
 	afx_msg void OnBnClickedRadio2();
 	afx_msg void OnBnClickedShowButton();
+	afx_msg void OnBnClickedIdButton();
 };
