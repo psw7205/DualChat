@@ -99,7 +99,8 @@ BOOL CClientDlg::OnInitDialog()
 
 	m_ipAddr.SetWindowText("127.0.0.1");
 	m_port.SetWindowText("9000");
-	m_roomNumber = 0;
+	m_roomNumber = 1;
+
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -275,12 +276,8 @@ void CClientDlg::OnBnClickedSendButton()
 
 void CClientDlg::MySendTo(CString str)
 {
-	if (m_roomNumber == 0)
-		return;
-
-
-	// 메세지 구성
-	str;
+	
+	
 	int retval = sendto(sock, str, str.GetLength(), 0,
 		(SOCKADDR*)& remoteaddr, sizeof(remoteaddr));
 	if (retval == SOCKET_ERROR) {

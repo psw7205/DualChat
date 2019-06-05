@@ -1,4 +1,4 @@
-
+ï»¿
 #pragma warning(disable:4996)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
@@ -16,7 +16,7 @@
 #define SECONDROOM	12
 #define SHOWUSERS	13
 
-// ¼ÒÄÏ Á¤º¸ ÀúÀåÀ» À§ÇÑ ±¸Á¶Ã¼¿Í º¯¼ö
+// ì†Œì¼“ ì •ë³´ ì €ì¥ì„ ìœ„í•œ êµ¬ì¡°ì²´ì™€ ë³€ìˆ˜
 struct SOCKETINFO
 {
 	SOCKET	sock;
@@ -37,13 +37,13 @@ int  userID;
 char  chatMsg[BUFSIZE];
 SOCKETINFO	*SockArray[FD_SETSIZE];
 
-// ¼ÒÄÏ °ü¸® ÇÔ¼ö
+// ì†Œì¼“ ê´€ë¦¬ í•¨ìˆ˜
 BOOL AddInfo(SOCKET sock);
 void RemoveInfo(int nIndex);
 bool CheckUserName(SOCKETINFO *ptr, int retval, int index);
 void Initialize();
 
-// ¼ÒÄÏ ÇÔ¼ö ¿À·ù Ãâ·Â ÈÄ Á¾·á
+// ì†Œì¼“ í•¨ìˆ˜ ì˜¤ë¥˜ ì¶œë ¥ í›„ ì¢…ë£Œ
 void err_quit(char *msg)
 {
 	LPVOID lpMsgBuf;
@@ -57,7 +57,7 @@ void err_quit(char *msg)
 	exit(1);
 }
 
-// ¼ÒÄÏ ÇÔ¼ö ¿À·ù Ãâ·Â
+// ì†Œì¼“ í•¨ìˆ˜ ì˜¤ë¥˜ ì¶œë ¥
 void err_display(char *msg)
 {
 	LPVOID lpMsgBuf;
@@ -76,7 +76,7 @@ int main()
 
 	int retval;
 
-	// À©¼Ó ÃÊ±âÈ­
+	// ìœˆì† ì´ˆê¸°í™”
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) return 1;
 
@@ -97,19 +97,19 @@ int main()
 	retval = listen(sock, SOMAXCONN);
 	if (retval == SOCKET_ERROR) err_quit(const_cast<char*>("listen()"));
 
-	// ³Íºí·ÎÅ· ¼ÒÄÏÀ¸·Î ÀüÈ¯
+	// ë„Œë¸”ë¡œí‚¹ ì†Œì¼“ìœ¼ë¡œ ì „í™˜
 	u_long on = 1;
 	retval = ioctlsocket(sock, FIONBIO, &on);
 	if (retval == SOCKET_ERROR) err_display(const_cast<char*>("ioctlsocket()"));
 
-	// µ¥ÀÌÅÍ Åë½Å¿¡ »ç¿ëÇÒ º¯¼ö(°øÅë)
+	// ë°ì´í„° í†µì‹ ì— ì‚¬ìš©í•  ë³€ìˆ˜(ê³µí†µ)
 	FD_SET rset, wset;
 	SOCKET clientSock;
 	int len, i, j;
 	SOCKADDR_IN clientAddr;
 
 	while (1) {
-		// ¼ÒÄÏ ¼Â ÃÊ±âÈ­
+		// ì†Œì¼“ ì…‹ ì´ˆê¸°í™”
 		FD_ZERO(&rset);
 		FD_ZERO(&wset);
 		FD_SET(sock, &rset);
@@ -128,7 +128,7 @@ int main()
 			break;
 		}
 
-		// ¼ÒÄÏ ¼Â °Ë»ç(1): Å¬¶óÀÌ¾ğÆ® Á¢¼Ó ¼ö¿ë
+		// ì†Œì¼“ ì…‹ ê²€ì‚¬(1): í´ë¼ì´ì–¸íŠ¸ ì ‘ì† ìˆ˜ìš©
 		if (FD_ISSET(sock, &rset)) {
 			len = sizeof(clientAddr);
 			clientSock = accept(sock, (SOCKADDR *)&clientAddr, &len);
@@ -137,22 +137,23 @@ int main()
 				break;
 			}
 			else {
-				// Á¢¼ÓÇÑ Å¬¶óÀÌ¾ğÆ® Á¤º¸ Ãâ·Â
-				printf("##Å¬¶óÀÌ¾ğÆ® Á¢¼Ó: %s:%d\n",
+				// ì ‘ì†í•œ í´ë¼ì´ì–¸íŠ¸ ì •ë³´ ì¶œë ¥
+				printf("##í´ë¼ì´ì–¸íŠ¸ ì ‘ì†: %s:%d\n",
 					inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
-				// ¼ÒÄÏ Á¤º¸ Ãß°¡
+				// ì†Œì¼“ ì •ë³´ ì¶”ê°€
 				AddInfo(clientSock);
 			}
 		}
 
-		// ¼ÒÄÏ ¼Â °Ë»ç(2): µ¥ÀÌÅÍ Åë½Å
+		// ì†Œì¼“ ì…‹ ê²€ì‚¬(2): ë°ì´í„° í†µì‹ 
 		for (i = 0; i < socketCount; i++) 
 		{
 			SOCKETINFO *ptr = SockArray[i];
 
 			if (FD_ISSET(ptr->sock, &rset)) 
 			{
-				// µ¥ÀÌÅÍ ¹Ş±â
+				memset(ptr->buf, 0, sizeof(ptr->buf));
+				// ë°ì´í„° ë°›ê¸°
 				retval = recv(ptr->sock, ptr->buf, BUFSIZE, 0);
 				if (retval == 0 || retval == SOCKET_ERROR)
 				{
@@ -164,38 +165,35 @@ int main()
 
 				len = sizeof(clientAddr);
 				getpeername(ptr->sock, (SOCKADDR *)&clientAddr, &len);
-				ptr->buf[retval] = '\0';
-
+				
 				/*
 
-				µ¥ÀÌÅÍ Ã³¸®
+				ë°ì´í„° ì²˜ë¦¬
 
 				*/
+			}
 
-				if (FD_ISSET(ptr->sock, &wset))
-				{
-					// µ¥ÀÌÅÍ º¸³»±â
-					for (j = 0; j < socketCount; j++) 
-					{  // ¿©·¯ Á¢¼ÓÀÚ¿¡°Ô ¹ß¼Û
-						SOCKETINFO *sptr = SockArray[j];
+			if (FD_ISSET(ptr->sock, &wset))
+			{
+				// ë°ì´í„° ë³´ë‚´ê¸°
+				for (j = 0; j < socketCount; j++)
+				{  // ì—¬ëŸ¬ ì ‘ì†ìì—ê²Œ ë°œì†¡
+					SOCKETINFO* sptr = SockArray[j];
+					retval = send(sptr->sock, ptr->buf + ptr->sendbytes,
+						ptr->recvbytes - ptr->sendbytes, 0);
 
-
-						retval = send(sptr->sock, ptr->buf + ptr->sendbytes,
-							ptr->recvbytes - ptr->sendbytes, 0);
-
-						if (retval == SOCKET_ERROR) 
-						{
-							err_display(const_cast<char*>("send()"));
-							RemoveInfo(i);
-							continue;
-						}
-					}
-
-					ptr->sendbytes += retval;
-					if (ptr->recvbytes == ptr->sendbytes) 
+					if (retval == SOCKET_ERROR)
 					{
-						ptr->recvbytes = ptr->sendbytes = 0;
+						err_display(const_cast<char*>("send()"));
+						RemoveInfo(i);
+						continue;
 					}
+				}
+
+				ptr->sendbytes += retval;
+				if (ptr->recvbytes == ptr->sendbytes)
+				{
+					ptr->recvbytes = ptr->sendbytes = 0;
 				}
 			}
 		}
@@ -204,20 +202,20 @@ int main()
 	return 0;
 }
 
-// ¼ÒÄÏ Á¤º¸ Ãß°¡
+// ì†Œì¼“ ì •ë³´ ì¶”ê°€
 BOOL AddInfo(SOCKET sock)
 {
 	if (socketCount >= FD_SETSIZE) {
-		printf("[¿À·ù] ¼ÒÄÏ Á¤º¸¸¦ Ãß°¡ÇÒ ¼ö ¾ø½À´Ï´Ù!\n");
+		printf("[ì˜¤ë¥˜] ì†Œì¼“ ì •ë³´ë¥¼ ì¶”ê°€í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤!\n");
 		return FALSE;
 	}
 
 	SOCKETINFO *ptr = new SOCKETINFO;
 	if (ptr == NULL) {
-		printf("[¿À·ù] ¸Ş¸ğ¸®°¡ ºÎÁ·ÇÕ´Ï´Ù!\n");
+		printf("[ì˜¤ë¥˜] ë©”ëª¨ë¦¬ê°€ ë¶€ì¡±í•©ë‹ˆë‹¤!\n");
 		return FALSE;
 	}
-	//½Ã°£¿¡ µû¸¥ ·£´ı UserID°ª »ı¼º
+	//ì‹œê°„ì— ë”°ë¥¸ ëœë¤ UserIDê°’ ìƒì„±
 	srand((unsigned int)time(NULL));
 	userID = rand();
 
@@ -230,16 +228,16 @@ BOOL AddInfo(SOCKET sock)
 	return TRUE;
 }
 
-// ¼ÒÄÏ Á¤º¸ »èÁ¦
+// ì†Œì¼“ ì •ë³´ ì‚­ì œ
 void RemoveInfo(int nIndex)
 {
 	SOCKETINFO *ptr = SockArray[nIndex];
 
-	// Á¾·áÇÑ Å¬¶óÀÌ¾ğÆ® Á¤º¸ Ãâ·Â
+	// ì¢…ë£Œí•œ í´ë¼ì´ì–¸íŠ¸ ì •ë³´ ì¶œë ¥
 	SOCKADDR_IN clientAddr;
 	int addrlen = sizeof(clientAddr);
 	getpeername(ptr->sock, (SOCKADDR *)&clientAddr, &addrlen);
-	printf("Å¬¶óÀÌ¾ğÆ® Á¾·á: [%s]:%d\n",
+	printf("í´ë¼ì´ì–¸íŠ¸ ì¢…ë£Œ: [%s]:%d\n",
 		inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
 	closesocket(ptr->sock);
@@ -255,7 +253,7 @@ bool CheckUserName(SOCKETINFO *ptr, int retval, int index) {
 	for (int i = 0; i < socketCount; i++) {
 		SOCKETINFO *pInfo = SockArray[i];
 		if (!strcmp(pInfo->name, ptr->name) && pInfo->room == ptr->room && pInfo->ID != ptr->ID) {
-			sprintf(chatMsg, "°°Àº ÀÌ¸§ÀÇ Á¢¼ÓÀÚ°¡ ÀÖ½À´Ï´Ù. ´Ğ³×ÀÓÀ» ¹Ù²ãÁÖ¼¼¿ä");
+			sprintf(chatMsg, "ê°™ì€ ì´ë¦„ì˜ ì ‘ì†ìê°€ ìˆìŠµë‹ˆë‹¤. ë‹‰ë„¤ì„ì„ ë°”ê¿”ì£¼ì„¸ìš”");
 			retval = send(ptr->sock, (char *)&chatMsg, BUFSIZE, 0);
 			RemoveInfo(index);
 			return true;
