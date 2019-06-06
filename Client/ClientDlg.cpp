@@ -34,43 +34,55 @@ DWORD WINAPI ThreadRecvMsg(LPVOID arg)
 		else if (retval == 0)
 			break;
 
-		if (recvMsg.type == FIRSTROOM)
+		CString str1 = "";
+		CString str2 = "";
+		int size = recvMsg.buf[0];
+
+		switch (recvMsg.type)
 		{
+		case FIRSTROOM:
 			pDlg->AddFirstRoomMsg(recvMsg.buf);
-		}
-		else if (recvMsg.type == SECONDROOM)
-		{
+			break;
+		case SECONDROOM:
 			pDlg->AddSecondRoomMsg(recvMsg.buf);
-		}
-		else if (recvMsg.type == SHOWUSERS)
-		{
-			int size = recvMsg.buf[0], i;
-			pDlg->AddFirstRoomMsg("########ROOM1 명단########");
-			pDlg->AddSecondRoomMsg("########ROOM2 명단########");
-			for (i = 0; i < size; ++i)
+			break;
+		case SHOWUSERS:
+			pDlg->AddFirstRoomMsg("ROOM1 명단################");
+			pDlg->AddSecondRoomMsg("ROOM2 명단################");
+			for (int i = 0; i < size; ++i)
 			{
 				recv(pDlg->sock, (char*)&recvMsg, sizeof(recvMsg), 0);
-				pDlg->AddFirstRoomMsg(recvMsg.buf);
+				str1.Append(recvMsg.buf);
+				str1.Append("//");
 				recv(pDlg->sock, (char*)&recvMsg, sizeof(recvMsg), 0);
-				pDlg->AddSecondRoomMsg(recvMsg.buf);
+				str2.Append(recvMsg.buf);
+				str2.Append("//");
 			}
+
+			pDlg->AddFirstRoomMsg(str1);
+			pDlg->AddSecondRoomMsg(str2);
 
 			pDlg->AddFirstRoomMsg("########################");
 			pDlg->AddSecondRoomMsg("########################");
-		}
-		else if (recvMsg.type == NAMECHANGE)
-		{
+			break;
+
+		case NAMECHECK:
 			if (recvMsg.buf[0] == '0')
 			{
-				AfxMessageBox("닉네임을 변경 하세요");
+				AfxMessageBox("닉네임 중복");
 				(pDlg->GetDlgItem(IDC_SEND_BUTTON))->EnableWindow(false);
+				(pDlg->GetDlgItem(IDC_SHOW_BUTTON))->EnableWindow(false);
 			}
 			else
 			{
-				AfxMessageBox("닉네임 변경 성공");
 				(pDlg->GetDlgItem(IDC_SEND_BUTTON))->EnableWindow(true);
+				(pDlg->GetDlgItem(IDC_SHOW_BUTTON))->EnableWindow(true);
 			}
+			break;
+		default:
+			break;
 		}
+		
 	}
 
 	return 0;
@@ -81,6 +93,12 @@ CClientDlg::CClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CLIENT_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
+
+CClientDlg::~CClientDlg()
+{
+	closesocket(sock);
+	WSACleanup();
 }
 
 void CClientDlg::DoDataExchange(CDataExchange* pDX)
@@ -103,6 +121,7 @@ BEGIN_MESSAGE_MAP(CClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO2, &CClientDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_SHOW_BUTTON, &CClientDlg::OnBnClickedShowButton)
 	ON_BN_CLICKED(IDC_ID_BUTTON, &CClientDlg::OnBnClickedIdButton)
+	ON_BN_CLICKED(IDCANCEL, &CClientDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -205,6 +224,10 @@ void CClientDlg::OnBnClickedButton1()
 		{
 			CloseHandle(hThread);
 		}
+
+		chatMsg.type = NAMECHECK;
+		send(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
+		chatMsg.type = FIRSTROOM;
 	}	
 }
 
@@ -350,11 +373,7 @@ bool CClientDlg::initSock()
 		return false;
 	}
 
-	int retval = send(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
-	if (retval == SOCKET_ERROR) {
-		AfxMessageBox("sendto() Error");
-	}
-
+	send(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
 	return true;
 }
 
@@ -426,12 +445,17 @@ void CClientDlg::AddSecondRoomMsg(CString str)
 
 void CClientDlg::OnBnClickedRadio1()
 {
+	chatMsg.type = NAMECHECK;
+	MySend("ROOM1 check");
 	chatMsg.type = FIRSTROOM;
 	m_name.SetWindowText(chatMsg.name[0]);
+
 }
 
 void CClientDlg::OnBnClickedRadio2()
 {
+	chatMsg.type = NAMECHECK;
+	MySend("ROOM2 check");
 	chatMsg.type = SECONDROOM;
 	m_name.SetWindowText(chatMsg.name[1]);
 }
@@ -460,9 +484,37 @@ void CClientDlg::OnBnClickedIdButton()
 	}
 
 	int tmp = chatMsg.type;
-	chatMsg.type = NAMECHANGE;
+	chatMsg.type = NAMECHECK;
 
 	MySend("name change");
 
 	chatMsg.type = tmp;
+}
+
+BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+			return TRUE;
+		else if (pMsg->wParam == VK_RETURN)
+			return TRUE;
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+void CClientDlg::OnBnClickedCancel()
+{
+	CString str = chatMsg.name[0];
+	chatMsg.type = FIRSTROOM;
+	str.Append(" 님이 퇴장하셨습니다.");
+	MySend(str);
+
+	chatMsg.type = SECONDROOM;
+	str = chatMsg.name[1];
+	str.Append(" 님이 퇴장하셨습니다.");
+	MySend(str);
+
+	CDialogEx::OnCancel();
 }

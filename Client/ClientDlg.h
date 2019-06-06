@@ -15,8 +15,7 @@
 #define FIRSTROOM	11
 #define SECONDROOM	12
 #define SHOWUSERS	13
-#define NAMECHANGE	14
-#define INIT		15
+#define NAMECHECK	14
 
 struct MSGDATA
 {
@@ -32,6 +31,7 @@ class CClientDlg : public CDialogEx
 // 생성입니다.
 public:
 	CClientDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
+	~CClientDlg();
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
@@ -82,4 +82,6 @@ public:
 	afx_msg void OnBnClickedRadio2();
 	afx_msg void OnBnClickedShowButton();
 	afx_msg void OnBnClickedIdButton();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedCancel();
 };

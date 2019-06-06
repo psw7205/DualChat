@@ -17,8 +17,7 @@
 #define FIRSTROOM	11
 #define SECONDROOM	12
 #define SHOWUSERS	13
-#define NAMECHANGE	14
-#define INIT		15
+#define NAMECHECK	14
 
 using namespace std;
 
@@ -138,11 +137,6 @@ int main()
 				printf("##클라이언트 접속: %s:%d\n",
 					inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
-				recv(clientSock, (char*)&chatMsg, sizeof(chatMsg), 0);
-				chatMsg.type
-
-
-				// 소켓 정보 추가
 				AddInfo(clientSock);
 			}
 		}
@@ -171,12 +165,12 @@ int main()
 					int idx = 0;
 					int size = 0;
 					int n;
-
+					bool flag = true;
 					ptr->recvbytes = 0;
 
 					switch (chatMsg.type)
 					{
-					case NAMECHANGE:
+					case NAMECHECK:
 						for (j = 0; j < socketCount; ++j)
 						{
 							SOCKETINFO *ptr2 = SockArray[j];
@@ -194,11 +188,17 @@ int main()
 
 						for (j = 0; j < socketCount; ++j)
 						{
-							if (!strcmp(chatMsg.name[n], SockArray[j]->name[n]))
-								break;
+							if (SockArray[j]->ID != chatMsg.ID)
+							{
+								if (!strcmp(chatMsg.name[n], SockArray[j]->name[n]))
+								{
+									flag = false;
+									break;
+								}
+							}
 						}
 
-						if (j == socketCount)
+						if (flag)
 						{
 							strcpy(SockArray[idx]->name[n], chatMsg.name[n]);
 							strcpy(chatMsg.buf, "1");
@@ -209,7 +209,7 @@ int main()
 							strcpy(chatMsg.buf, "0");
 							send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
 						}
-						
+
 						break;
 					case SHOWUSERS:
 						for (j = 0; j < socketCount; ++j)
@@ -225,7 +225,7 @@ int main()
 
 						chatMsg.buf[0] = socketCount;
 						send(SockArray[idx]->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
-						
+
 						for (j = 0; j < socketCount; ++j)
 						{
 							SOCKETINFO *ptr2 = SockArray[j];
@@ -240,7 +240,7 @@ int main()
 						break;
 
 					default:
-						// 현재 접속한 모든 클라이언트에게 데이터를 보냄!
+						// 현재 접속한 모든 클라이언트에게 데이터를 보냄
 						for (j = 0; j < socketCount; ++j) {
 							SOCKETINFO *ptr2 = SockArray[j];
 							retval = send(ptr2->sock, (char*)&chatMsg, sizeof(chatMsg), 0);
