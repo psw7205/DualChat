@@ -1,4 +1,8 @@
-﻿//{{NO_DEPENDENCIES}}
+﻿// 2019년 1학기 네트워크프로그래밍 숙제 3번
+// 성명: 박상우 학번: 16013093
+// 플랫폼: VS2017
+
+//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++에서 생성한 포함 파일입니다.
 // Client.rc에서 사용되고 있습니다.
 //

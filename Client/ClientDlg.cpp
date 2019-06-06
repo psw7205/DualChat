@@ -1,4 +1,7 @@
-﻿
+﻿// 2019년 1학기 네트워크프로그래밍 숙제 3번
+// 성명: 박상우 학번: 16013093
+// 플랫폼: VS2017
+
 // ClientDlg.cpp: 구현 파일
 //
 
@@ -41,10 +44,16 @@ DWORD WINAPI ThreadRecvMsg(LPVOID arg)
 		switch (recvMsg.type)
 		{
 		case FIRSTROOM:
-			pDlg->AddFirstRoomMsg(recvMsg.buf);
+			if (recvMsg.type == pDlg->chatMsg.type)
+			{
+				pDlg->AddFirstRoomMsg(recvMsg.buf);
+			}
 			break;
 		case SECONDROOM:
-			pDlg->AddSecondRoomMsg(recvMsg.buf);
+			if (recvMsg.type == pDlg->chatMsg.type)
+			{
+				pDlg->AddSecondRoomMsg(recvMsg.buf);
+			}
 			break;
 		case SHOWUSERS:
 			pDlg->AddFirstRoomMsg("ROOM1 명단################");
@@ -506,15 +515,18 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 
 void CClientDlg::OnBnClickedCancel()
 {
-	CString str = chatMsg.name[0];
-	chatMsg.type = FIRSTROOM;
-	str.Append(" 님이 퇴장하셨습니다.");
-	MySend(str);
+	if (sock != INVALID_SOCKET)
+	{
+		CString str = chatMsg.name[0];
+		chatMsg.type = FIRSTROOM;
+		str.Append(" 님이 퇴장하셨습니다.");
+		MySend(str);
 
-	chatMsg.type = SECONDROOM;
-	str = chatMsg.name[1];
-	str.Append(" 님이 퇴장하셨습니다.");
-	MySend(str);
+		chatMsg.type = SECONDROOM;
+		str = chatMsg.name[1];
+		str.Append(" 님이 퇴장하셨습니다.");
+		MySend(str);
+	}
 
 	CDialogEx::OnCancel();
 }

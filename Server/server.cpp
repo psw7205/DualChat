@@ -1,4 +1,7 @@
-﻿
+﻿// 2019년 1학기 네트워크프로그래밍 숙제 3번
+// 성명: 박상우 학번: 16013093
+// 플랫폼: VS2017
+
 #pragma warning(disable:4996)
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
