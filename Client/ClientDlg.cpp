@@ -154,6 +154,7 @@ BOOL CClientDlg::OnInitDialog()
 
 	srand((unsigned int)time(NULL));
 	chatMsg.ID = rand();
+	flag = false;
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -233,6 +234,8 @@ void CClientDlg::OnBnClickedButton1()
 		{
 			CloseHandle(hThread);
 		}
+
+		flag = true;
 
 		chatMsg.type = NAMECHECK;
 		send(sock, (char*)&chatMsg, sizeof(chatMsg), 0);
@@ -515,7 +518,7 @@ BOOL CClientDlg::PreTranslateMessage(MSG* pMsg)
 
 void CClientDlg::OnBnClickedCancel()
 {
-	if (sock != INVALID_SOCKET)
+	if (flag)
 	{
 		CString str = chatMsg.name[0];
 		chatMsg.type = FIRSTROOM;

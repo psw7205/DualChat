@@ -79,6 +79,8 @@ public:
 	CListBox m_secondRoom;
 	CEdit m_name;
 	
+	bool flag; 
+
 	MSGDATA chatMsg;
 
 	afx_msg void OnBnClickedRadio1();
